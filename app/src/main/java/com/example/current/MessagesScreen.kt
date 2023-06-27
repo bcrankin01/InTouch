@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,9 +32,16 @@ fun MessagesScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
+
+        val messages = listOf(
+            Message("Hi how have you been", "6/26/23", "me", "1"),
+            Message("I have been good", "6/26/23", "other", "1")
+        )
+
         HeaderSection()
-        Conversation()
+        Conversation(messages)
         InputSection()
+
     }
 
 
@@ -47,6 +55,7 @@ fun Conversation(
         modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
+            .border(2.dp, Color.Gray)
             ){
         items(messages) { message ->
             when (message.sender) {
@@ -55,7 +64,15 @@ fun Conversation(
                         horizontalArrangement = Arrangement.End,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        Text(
+                            text = message.content,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .background(Color.Blue, CircleShape)
+                                .padding(8.dp)
 
+                        )
                     }
                 }
                 "admin" -> {
@@ -63,15 +80,30 @@ fun Conversation(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-
+                        Text(
+                            text = message.content,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .background(Color.Yellow, CircleShape)
+                                .padding(8.dp)
+                        )
                     }
                 }
-                "Other" -> {
+                "other" -> {
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        Text(
+                            text = message.content,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .background(Color.Gray, CircleShape)
+                                .padding(8.dp)
 
+                        )
                     }
                 }
             }
@@ -81,7 +113,15 @@ fun Conversation(
 
 @Composable
 fun InputSection() {
-
+//    OutlinedTextField(
+//        modifier = Modifier
+//            .background(Color.White),
+//        value = password,
+//        onValueChange = { text ->
+//            password = text
+//        },
+//        label = { Text("Password") }, // Hint for the password field
+//    )
 }
 
 @Composable

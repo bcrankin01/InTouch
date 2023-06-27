@@ -11,7 +11,7 @@ fun Navigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.HomeScreen.route
+        startDestination = Screen.SigninScreen.route
     ) {
         composable(
             route = Screen.HomeScreen.route
@@ -22,6 +22,16 @@ fun Navigation(
             route = Screen.MessagesScreen.route
         ) {
             MessagesScreen(navController)
+        }
+        composable(
+            route = Screen.SignupScreen.route
+        ) {
+            SignupScreen(navController)
+        }
+        composable(
+            route = Screen.SigninScreen.route
+        ) {
+            SigninScreen(navController)
         }
     }
 }
