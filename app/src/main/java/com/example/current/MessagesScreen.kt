@@ -7,45 +7,78 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+
+private var firebaseManager = FirebaseManager()
+private var currentUser = Firebase.auth.currentUser
 
 @Composable
 fun MessagesScreen(
-    navController: NavController
+    navController: NavController,
+    messageGroupId: String
 ) {
+    var messages by remember {
+        mutableStateOf(listOf<Message>())
+    }
+
+    firebaseManager.fetchMessagesByGroupId(messageGroupId, object: FirebaseManager.FetchMessagesByGroupIdListener {
+        override fun onSuccess(the_messages: List<Message>) {
+            messages = the_messages
+        }
+
+        override fun onError(errorMessage: String) {
+            TODO("Not yet implemented")
+        }
+    })
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-
-        val messages = listOf(
-            Message("Hi how have you been", "6/26/23", "me", "1"),
-            Message("I have been good", "6/26/23", "other", "1")
-        )
-
         HeaderSection()
+        Divider()
+        Spacer(modifier = Modifier.weight(1f))
         Conversation(messages)
-        InputSection()
+        Divider()
+        InputSection(messageGroupId) {
+            firebaseManager.fetchMessagesByGroupId(messageGroupId, object: FirebaseManager.FetchMessagesByGroupIdListener {
+                override fun onSuccess(the_messages: List<Message>) {
+                    messages = the_messages
+                }
 
+                override fun onError(errorMessage: String) {
+                    TODO("Not yet implemented")
+                }
+            })
+        }
     }
-
-
 }
+
+private fun loadMessages(messageGroupId: String): List<Message> {
+    var myMessages = emptyList<Message>()
+
+    return myMessages
+}
+
+
 
 @Composable
 fun Conversation(
@@ -53,16 +86,17 @@ fun Conversation(
 ) {
     LazyColumn (
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(10.dp)
-            .border(2.dp, Color.Gray)
             ){
         items(messages) { message ->
-            when (message.sender) {
-                "me" -> {
+            when (message.userId) {
+                "${currentUser?.uid.toString()}" -> {
                     Row(
                         horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
                     ) {
                         Text(
                             text = message.content,
@@ -90,7 +124,7 @@ fun Conversation(
                         )
                     }
                 }
-                "other" -> {
+                else -> {
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.fillMaxWidth()
@@ -100,7 +134,7 @@ fun Conversation(
                             color = Color.White,
                             fontSize = 18.sp,
                             modifier = Modifier
-                                .background(Color.Gray, CircleShape)
+                                .background(Color.Green, CircleShape)
                                 .padding(8.dp)
 
                         )
@@ -112,17 +146,57 @@ fun Conversation(
 }
 
 @Composable
-fun InputSection() {
-//    OutlinedTextField(
-//        modifier = Modifier
-//            .background(Color.White),
-//        value = password,
-//        onValueChange = { text ->
-//            password = text
-//        },
-//        label = { Text("Password") }, // Hint for the password field
-//    )
+fun InputSection(
+    messageGroupId: String,
+    reload: () -> Unit
+) {
+    var msg by remember {
+        mutableStateOf("")
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Input text field
+        TextField(
+            value = msg, // Replace with your state for the input text
+            onValueChange = { text ->
+                msg = text
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            placeholder = {
+                Text(
+                    text = "Type a message",
+                    color = Color.White // Set the placeholder color
+                )
+            },
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent, // Set the input field background color
+                cursorColor = Color.White, // Set the cursor color
+                focusedIndicatorColor = Color.Transparent, // Set the focused indicator color
+                unfocusedIndicatorColor = Color.Transparent // Set the unfocused indicator color
+            ),
+            textStyle = LocalTextStyle.current.copy(color = Color.White) // Set the input text color
+        )
+
+        // Send button
+        Button(
+            onClick = {
+                firebaseManager.sendMessage(msg, messageGroupId)
+                reload()
+                msg = ""
+                      },
+            modifier = Modifier.align(Alignment.CenterVertically)
+        ) {
+            Text("Send")
+        }
+    }
 }
+
 
 @Composable
 fun HeaderSection() {
@@ -167,6 +241,7 @@ fun HeaderSection() {
 @Preview
 fun MessagesScreenPreview() {
     MessagesScreen(
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        messageGroupId = ""
     )
 }

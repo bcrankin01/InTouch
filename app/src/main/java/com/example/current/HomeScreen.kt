@@ -58,7 +58,7 @@ fun HomeScreen(
         ) {
             TopBar { showConnectionPopup.value = !(showConnectionPopup.value)}
             HomeNav()
-            ConnectionsFeed()
+            ConnectionsFeed(navController)
         }
 
         if (showConnectionPopup.value) {
@@ -106,11 +106,25 @@ fun HomeNav() {
 }
 
 @Composable
-fun ConnectionsFeed() {
+fun ConnectionsFeed(
+    navController: NavController
+) {
 
     var connections by remember {
-        mutableStateOf(listOf<String>())
+        mutableStateOf(listOf<Pair<String, Connection>>())
     }
+
+    firebaseManager.fetchMyConnections(object: FirebaseManager.FetchConnectionsListener {
+        override fun onSuccess(the_connections: List<Pair<String, Connection>>) {
+            connections = the_connections
+        }
+
+        override fun onError(databaseError: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+
+    })
+
 
     Box(
         modifier = Modifier
@@ -119,8 +133,61 @@ fun ConnectionsFeed() {
             .padding(20.dp)
             .border(2.dp, Color.White)
     ) {
-        ConnectionCard(R.drawable.testpic, "How have you been?", "9:15pm", "10")
-    }
+//        var users = listOf<String>()
+
+        Log.d("Feed", "#Connections: ${connections.size}")
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            LazyColumn() {
+                items(connections) { connection ->
+                    Log.d("Feed", "Connection Id: ${connection.second}")
+                    if (connection.second.status == "fresh") {
+                        FreshConnectionCard(
+                            profilePic = R.drawable.testpic,
+                            users = emptyList(),
+                            streak = "${connection.second.streak}"
+                        )
+                    }
+                }
+            }
+
+            Divider()
+
+
+
+            LazyColumn() {
+                items(connections) { connection ->
+                    if (connection.second.status == "open") {
+//                        firebaseManager.createMessageGroup(connection.first)
+                        var groupId = ""
+                        firebaseManager.getNewestMessageGroupById(connection.first, object: FirebaseManager.GetNewestMessageGroupByIdListener {
+                            override fun onSuccess(messageGroupId: String) {
+                                groupId = messageGroupId
+                            }
+
+                            override fun onError(errorMessage: String) {
+                                TODO("Not yet implemented")
+                            }
+
+                        })
+                        ConnectionCard(
+                            profilePic = R.drawable.testpic,
+                            recentMsg = "How have you been?",
+                            recentTime = "12:26",
+                            streak = "${connection.second.streak}",
+                            onClick = {
+                                navController.navigate(Screen.MessagesScreen.route + "/$groupId")
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        }
+
 
 
 }
@@ -132,6 +199,7 @@ fun ConnectionCard(
     recentMsg: String,
     recentTime: String,
     streak: String,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -139,6 +207,7 @@ fun ConnectionCard(
             .padding(12.dp),
         elevation = 4.dp,
         shape = RoundedCornerShape(16.dp),
+        onClick = onClick
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,6 +239,80 @@ fun ConnectionCard(
                 Text(
                     text = recentTime,
                     color = Color.Gray,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .background(Color.Transparent, shape = CircleShape)
+                    .border(1.dp, Color.Red, CircleShape)
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = streak,
+                    color = Color.Red,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+    }
+
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun FreshConnectionCard(
+    profilePic: Int,
+    users: List<String>,
+    streak: String,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        elevation = 4.dp,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .background(Color.Black),
+
+            ) {
+            Image(
+                painter = painterResource(profilePic),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(80.dp)
+                    .padding(8.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+            ) {
+                var names = ""
+                users.forEach { name->
+                    names += "$name, "
+                }
+
+                Text(
+                    text = names,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = "You have 30 minutes to connect!",
+                    color = Color.Yellow,
                     fontSize = 12.sp,
                     modifier = Modifier.align(Alignment.Start)
                 )
@@ -310,7 +453,7 @@ fun ConnectionPopup(modifier: Modifier? = null, onCloseClick: () -> Unit) {
                             modifier = Modifier
                                 .padding(8.dp)
                                 .size(20.dp)
-                                .clickable { includedUsers += user}
+                                .clickable { includedUsers += user }
 
                         )
                     }
@@ -325,7 +468,10 @@ fun ConnectionPopup(modifier: Modifier? = null, onCloseClick: () -> Unit) {
                     .fillMaxWidth()
                     .background(Color.Black)
             ) {
-                Button(onClick = { firebaseManager.createNewConnection(includedUsers) }) {
+                Button(onClick = {
+                    firebaseManager.createNewConnection(includedUsers)
+                    onCloseClick()
+                }) {
                     Text(text = "Create")
                 }
                 Button(onClick = { onCloseClick() }) {
