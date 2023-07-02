@@ -28,6 +28,10 @@ fun SignupScreen(
     navController: NavController
 ) {
 
+    var email by remember {
+        mutableStateOf("")
+    }
+
     var username by remember {
         mutableStateOf("")
     }
@@ -38,7 +42,6 @@ fun SignupScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .background(Color.Black),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -46,6 +49,20 @@ fun SignupScreen(
         Text(
             text = "Sign Up",
             color = Color.White
+        )
+
+        OutlinedTextField(
+            modifier = Modifier
+                .background(Color.White),
+            value = email,
+            onValueChange = { text ->
+                email = text
+            },
+            label = { Text("Email") },
+        )
+
+        Spacer(
+            modifier = Modifier.size(16.dp)
         )
 
         OutlinedTextField(
@@ -75,7 +92,7 @@ fun SignupScreen(
         Button(
             onClick = {
                 Log.d("OnSignIn", "Email: ${username}, Password: $password")
-                signup(username, password, navController)
+                signup(username, email, password, navController)
             }
         ) {
             Text(
@@ -87,7 +104,10 @@ fun SignupScreen(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Already have an account?")
+            Text(
+                text = "Already have an account?",
+                color = Color.White
+            )
             TextButton(onClick = {
                 navController.navigate(route = Screen.SigninScreen.route)
             }) {
@@ -101,7 +121,7 @@ fun SignupScreen(
     }
 }
 
-private fun signup(email: String, password: String, navController: NavController) {
+private fun signup(username: String, email: String, password: String, navController: NavController) {
     val auth = FirebaseAuth.getInstance()
 
     auth.createUserWithEmailAndPassword(email, password)
@@ -109,7 +129,7 @@ private fun signup(email: String, password: String, navController: NavController
             if (task.isSuccessful) {
                 // User creation successful, a new user is created
                 val user = auth.currentUser
-                firebaseManager.createUser(user?.uid.toString(), email)
+                firebaseManager.createUser(user?.uid.toString(), username)
                 navController.navigate(Screen.HomeScreen.route)
             } else {
                 // User creation failed, handle the error
