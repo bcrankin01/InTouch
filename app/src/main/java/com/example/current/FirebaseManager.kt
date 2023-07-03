@@ -83,7 +83,7 @@ class FirebaseManager {
         //get list of ids
         var idList = users.map { it.first }
         idList += currentUser?.uid.toString()
-        val connectionData = Connection(idList)
+        val connectionData = Connection(members = idList)
 
         //push connection to connections collection, grab the key, set value of ref
         val connectionRef = database.child("connections").push()

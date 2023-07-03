@@ -1,5 +1,7 @@
 package com.example.current
 
+import android.content.Intent
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,12 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 
 private var firebaseManager = FirebaseManager()
@@ -26,6 +31,29 @@ private var firebaseManager = FirebaseManager()
 fun SigninScreen(
     navController: NavController
 ) {
+//    val context = LocalContext.current
+//
+//    val notificationManager = NotificationManagerCompat.from(context)
+//    val areNotificationsEnabled = notificationManager.areNotificationsEnabled()
+//
+//    if (!areNotificationsEnabled) {
+//        MaterialAlertDialogBuilder(context)
+//            .setTitle("Enable Notifications")
+//            .setMessage("This app requires notifications to be enabled. Would you like to enable them?")
+//            .setPositiveButton("Yes") { _, _ ->
+//                // Open app settings to enable notifications
+//                val intent = Intent().apply {
+//                    action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+//                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+//                }
+//                context.startActivity(intent)
+//            }
+//            .setNegativeButton("No") { dialog, _ ->
+//                // Handle the case when the user declines to enable notifications
+//                dialog.dismiss()
+//            }
+//            .show()
+//    }
 
     var username by remember {
         mutableStateOf("")
@@ -96,6 +124,12 @@ fun SigninScreen(
                 )
             }
         }
+//        val noti = MyNotification(LocalContext.current, "FCM", "This is a test notification.")
+//
+//        Button(onClick = { noti.fireNotification() }) {
+//            Text("Test")
+//        }
+
     }
 }
 
